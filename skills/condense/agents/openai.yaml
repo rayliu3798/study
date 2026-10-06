@@ -1,0 +1,4 @@
+interface:
+  display_name: "Condense"
+  short_description: "Integrate a learning topic and its nested answers"
+  default_prompt: "Use $condense to reorganize the current learning topic."

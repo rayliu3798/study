@@ -1,0 +1,6 @@
+__pycache__/
+tests/.tmp/
+tests/.validation/
+tests/.protocol/
+*.bak
+/learn/

@@ -1,0 +1,37 @@
+"""Register this plugin in a personal marketplace, preserving existing entries."""
+import argparse
+import json
+from pathlib import Path
+import time
+from learn import atomic, dump, LearnError
+
+
+def register(home, plugin):
+    home, plugin = Path(home).resolve(), Path(plugin).resolve()
+    manifests = (plugin / ".codex-plugin" / "plugin.json", plugin / "plugin.json")
+    if not plugin.is_relative_to(home) or not any(path.is_file() for path in manifests):
+        raise LearnError("Plugin must exist inside the specified personal marketplace root.")
+    path = home / ".agents" / "plugins" / "marketplace.json"
+    marketplace = json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else {
+        "name": "personal", "interface": {"displayName": "Personal"}, "plugins": []}
+    entry = {"name": "codex-learn", "source": {"source": "local", "path": "./" + plugin.relative_to(home).as_posix()},
+             "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"}
+    if not isinstance(marketplace.get("name"), str) or not isinstance(marketplace.get("plugins"), list):
+        raise LearnError("Invalid personal marketplace: name and plugins are required.")
+    matches = [e for e in marketplace["plugins"] if e.get("name") == "codex-learn"]
+    if len(matches) > 1 or (matches and matches[0].get("source") != entry["source"]):
+        raise LearnError("A different codex-learn entry already exists; refusing to replace it.")
+    if not matches:
+        if path.exists():
+            atomic(path.with_name("marketplace.backup-" + str(time.time_ns()) + ".json"), path.read_text(encoding="utf-8-sig"))
+        marketplace["plugins"].append(entry)
+        atomic(path, dump(marketplace))
+    return {"marketplace": str(path), "name": marketplace["name"], "plugin": str(plugin),
+            "next": f"Run codex plugin add codex-learn@{marketplace['name']}, then review its hooks."}
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--home", required=True, help="Actual user's home, not a sandbox account")
+    args = parser.parse_args()
+    print(dump(register(args.home, Path(__file__).resolve().parents[1])))

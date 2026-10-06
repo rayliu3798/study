@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learn"
+  short_description: "Live Markdown notes with nested quoted questions"
+  default_prompt: "Use $learn to enable learning notes for this conversation."
