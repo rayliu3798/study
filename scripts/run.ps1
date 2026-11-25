@@ -20,5 +20,5 @@ if (-not $learnPython) {
     }
 }
 if (-not $learnPython) { throw 'Python 3 is required. Set CODEX_LEARN_PYTHON to its executable path.' }
-& $learnPython @learnPrefix -X utf8 (Join-Path $PSScriptRoot 'learn.py') @args
+& $learnPython @learnPrefix -X utf8 (Join-Path $PSScriptRoot 'study.py') @args
 exit $LASTEXITCODE

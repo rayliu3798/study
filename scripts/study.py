@@ -9,7 +9,7 @@ import re
 import sys
 
 
-class LearnError(Exception):
+class StudyError(Exception):
     pass
 
 
@@ -44,7 +44,7 @@ def bindings(project):
         try:
             records = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
             if not isinstance(records, dict) or any(not isinstance(record, dict) for record in records.values()):
-                raise LearnError("Invalid active-note bindings.")
+                raise StudyError("Invalid active-note bindings.")
             before = dump(records)
             yield records
             after = dump(records)
@@ -90,7 +90,7 @@ def selected_note(project, note):
         target = (root if target.parent == Path(".") else Path(project)) / target
     target = target.resolve()
     if target.parent != root or target.suffix.lower() != ".md" or not target.is_file():
-        raise LearnError("Select an existing Markdown note in this project's learn folder.")
+        raise StudyError("Select an existing Markdown note in this project's learn folder.")
     return target
 
 
@@ -159,7 +159,7 @@ def save_answer(project, record, message):
     if anchor:
         text = note.read_text(encoding="utf-8")
         if text.count(anchor) != 1:
-            raise LearnError("The selected passage changed or is ambiguous; select it again.")
+            raise StudyError("The selected passage changed or is ambiguous; select it again.")
         start = text.index(anchor)
         line_start = text.rfind("\n", 0, start) + 1
         prefix = re.match(r"(?:[ \t]*>[ \t]?)*", text[line_start:]).group()
@@ -180,10 +180,10 @@ def save_answer(project, record, message):
 def place(records, project, session, anchor):
     record = records.get(session, {})
     if not record.get("enabled") or not record.get("pending"):
-        raise LearnError("There is no current learning question to place.")
+        raise StudyError("There is no current learning question to place.")
     text = selected_note(project, record["note"]).read_text(encoding="utf-8")
     if not anchor or text.count(anchor) != 1:
-        raise LearnError("Select an exact passage that occurs once in the current note.")
+        raise StudyError("Select an exact passage that occurs once in the current note.")
     record["pending"]["anchor"] = anchor
 
 
@@ -275,12 +275,12 @@ def main(argv=None):
             result = hook(json.load(sys.stdin))
         else:
             if not args.session:
-                raise LearnError("No session ID. Enable and trust the Learn hooks first.")
+                raise StudyError("No session ID. Enable and trust the study hooks first.")
             with bindings(args.project) as records:
                 record = records.get(args.session)
                 if args.command in ("enable", "continue"):
                     if args.command == "continue" and not args.note:
-                        raise LearnError("Select the note to continue with --note.")
+                        raise StudyError("Select the note to continue with --note.")
                     bind(records, args.project, args.session, args.note, args.topic)
                     if args.question and args.question.strip():
                         records[args.session]["pending"] = {"question": args.question}
@@ -288,7 +288,7 @@ def main(argv=None):
                     record.update(enabled=False, pending=None)
                 elif args.command == "pause":
                     if not record or not record.get("enabled"):
-                        raise LearnError("Learning notes are not enabled.")
+                        raise StudyError("Learning notes are not enabled.")
                     record["pause"] = True
                 elif args.command == "exclude" and record:
                     record["pending"] = None
@@ -298,7 +298,7 @@ def main(argv=None):
                 result = status(records, args.project, args.session)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
-    except (LearnError, OSError, ValueError) as error:
+    except (StudyError, OSError, ValueError) as error:
         print(json.dumps({"error": str(error)}, ensure_ascii=False), file=sys.stderr)
         return 1
 

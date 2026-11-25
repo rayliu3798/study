@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import time
 from unittest.mock import patch
-import learn
+import study
 
 
 def main():
@@ -23,9 +23,9 @@ def main():
             for index in range(1000):
                 stream.write(record("user", f"Explain topic {index}."))
                 stream.write(record("assistant", f"Unique conclusion for topic {index}.\n\n" + "An explanation with definitions, examples, and qualifications. " * 20))
-        store = learn.Store(project, session)
+        store = study.Store(project, session)
         started = time.perf_counter()
-        learn.enable(store, transcript)
+        study.enable(store, transcript)
         backfill_seconds = time.perf_counter() - started
         with store.locked() as state:
             cursor = state["cursor"]
@@ -34,19 +34,19 @@ def main():
             stream.write(update.encode("utf-8"))
         started = time.perf_counter()
         with store.locked() as state:
-            learn.sync(state)
+            study.sync(state)
             store.commit(state)
         update_seconds = time.perf_counter() - started
         appended_bytes = state["cursor"] - cursor
-        with patch.object(learn, "atomic", wraps=learn.atomic) as writes:
+        with patch.object(study, "atomic", wraps=study.atomic) as writes:
             started = time.perf_counter()
             for _ in range(20):
                 with store.locked() as state:
-                    learn.sync(state)
+                    study.sync(state)
                     store.commit(state)
             idle_seconds = time.perf_counter() - started
             idle_writes = writes.call_count
-        print(learn.dump({"questions": 1000, "transcript_bytes": transcript.stat().st_size,
+        print(study.dump({"questions": 1000, "transcript_bytes": transcript.stat().st_size,
             "backfill_seconds": round(backfill_seconds, 3), "quoted_update_seconds": round(update_seconds, 3),
             "new_bytes_read": appended_bytes, "expected_new_bytes": len(update.encode("utf-8")),
             "idle_syncs": 20, "idle_seconds": round(idle_seconds, 3), "idle_writes": idle_writes}).strip())

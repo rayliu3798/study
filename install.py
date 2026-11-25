@@ -11,7 +11,7 @@ import time
 
 PACKAGE = Path(__file__).resolve().parent
 sys.path.insert(0, str(PACKAGE / "scripts"))
-from learn import LearnError
+from study import StudyError
 from register import register
 
 FLAGS = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
@@ -27,28 +27,28 @@ def codex_executable(explicit=None):
                      home / ".codex/packages/standalone/current/bin/codex.exe"):
             if path.is_file():
                 return str(path)
-    raise LearnError("Codex CLI was not found. Install it or pass --codex <executable>.")
+    raise StudyError("Codex CLI was not found. Install it or pass --codex <executable>.")
 
 
 def cli(executable, *args, as_json=False):
     result = subprocess.run([executable, *args], capture_output=True, text=True,
                             encoding="utf-8", errors="replace", timeout=45, creationflags=FLAGS)
     if result.returncode:
-        raise LearnError(f"codex {' '.join(args)} failed:\n{result.stderr.strip() or result.stdout.strip()}")
+        raise StudyError(f"codex {' '.join(args)} failed:\n{result.stderr.strip() or result.stdout.strip()}")
     return json.loads(result.stdout) if as_json else result.stdout
 
 
 def validate_package(package):
     manifest = package / ".codex-plugin/plugin.json"
     if not manifest.is_file():
-        raise LearnError("The package needs .codex-plugin/plugin.json.")
+        raise StudyError("The package needs .codex-plugin/plugin.json.")
     metadata = json.loads(manifest.read_text(encoding="utf-8-sig"))
     if metadata.get("name") != "study" or metadata.get("hooks") != "./hooks/hooks.json":
-        raise LearnError("This is not the supported study package.")
-    for relative in ("scripts/learn.py", "scripts/run.ps1", "hooks/hooks.json",
+        raise StudyError("This is not the supported study package.")
+    for relative in ("scripts/study.py", "scripts/run.ps1", "hooks/hooks.json",
                      "skills/study/SKILL.md", "skills/condense/SKILL.md", "install.py", "install.ps1", "README.md"):
         if not (package / relative).is_file():
-            raise LearnError(f"Incomplete plugin package: missing {relative}.")
+            raise StudyError(f"Incomplete plugin package: missing {relative}.")
 
 
 def destination(home):
@@ -58,39 +58,39 @@ def destination(home):
         if (not isinstance(data, dict) or not isinstance(data.get("name"), str)
                 or not isinstance(data.get("plugins"), list)
                 or not all(isinstance(entry, dict) for entry in data["plugins"])):
-            raise LearnError("The existing personal marketplace is invalid; leaving it unchanged.")
+            raise StudyError("The existing personal marketplace is invalid; leaving it unchanged.")
         matches = [entry for entry in data.get("plugins", []) if entry.get("name") in ("study", "codex-learn")]
         if len(matches) > 1:
-            raise LearnError("The personal marketplace has conflicting entries for study.")
+            raise StudyError("The personal marketplace has conflicting entries for study.")
         if matches:
             source = matches[0].get("source", {})
             if source.get("source") != "local" or not source.get("path", "").startswith("./"):
-                raise LearnError("An existing study entry uses another source; leaving it unchanged.")
+                raise StudyError("An existing study entry uses another source; leaving it unchanged.")
             target = (home / source["path"]).resolve()
             if not target.is_relative_to(home) or target == home:
-                raise LearnError("The existing plugin source must stay inside your home directory.")
+                raise StudyError("The existing plugin source must stay inside your home directory.")
             return target
     return (home / ".codex/plugins/sources/study").resolve()
 
 
 def copy_package(package, target, home):
     if target == home or not target.is_relative_to(home):
-        raise LearnError("The installation target must stay inside your home directory.")
+        raise StudyError("The installation target must stay inside your home directory.")
     if target.exists() and any(target.iterdir()):
         manifests = (target / ".codex-plugin/plugin.json", target / "plugin.json")
         existing = next((path for path in manifests if path.is_file()), None)
         if not existing or json.loads(existing.read_text(encoding="utf-8-sig")).get("name") not in ("study", "codex-learn"):
-            raise LearnError("The installation target contains another project; leaving it unchanged.")
+            raise StudyError("The installation target contains another project; leaving it unchanged.")
     files = [package / name for name in ("install.py", "install.ps1", "README.md")]
     for name in (".codex-plugin", "hooks", "scripts", "skills"):
         files.extend(path for path in (package / name).rglob("*") if path.is_file()
                      and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".bak"})
     for source in files:
         if not source.resolve().is_relative_to(package):
-            raise LearnError("A package file points outside the plugin directory.")
+            raise StudyError("A package file points outside the plugin directory.")
         output = target / source.relative_to(package)
         if not output.resolve().is_relative_to(target):
-            raise LearnError("An installation file points outside the plugin directory.")
+            raise StudyError("An installation file points outside the plugin directory.")
         content = source.read_bytes()
         if output.is_file() and output.read_bytes() == content:
             continue
@@ -119,7 +119,7 @@ def install(home, package=PACKAGE, executable=None, output=print):
     marketplaces = cli(executable, "plugin", "marketplace", "list", "--json", as_json=True)["marketplaces"]
     matching = [market for market in marketplaces if market["name"] == name]
     if matching and not any(Path(market["root"]).resolve() == home for market in matching):
-        raise LearnError(f"A different marketplace already uses the name {name}; it was not replaced.")
+        raise StudyError(f"A different marketplace already uses the name {name}; it was not replaced.")
     if not matching:
         cli(executable, "plugin", "marketplace", "add", str(home), "--json", as_json=True)
     plugin_id = f"study@{name}"
@@ -139,7 +139,7 @@ def main():
         result = install(Path.home(), executable=args.codex,
                          output=lambda value: print(value, file=sys.stderr))
         print(json.dumps(result, indent=2) if args.json else result["next"])
-    except (LearnError, OSError, ValueError, subprocess.SubprocessError) as error:
+    except (StudyError, OSError, ValueError, subprocess.SubprocessError) as error:
         print(f"Installation failed: {error}", file=sys.stderr)
         return 1
     return 0

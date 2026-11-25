@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("learn_installer", ROOT / "install.py")
+spec = importlib.util.spec_from_file_location("study_installer", ROOT / "install.py")
 installer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(installer)
 
@@ -61,7 +61,7 @@ class InstallationTests(unittest.TestCase):
         target.mkdir()
         note = target / "personal.md"
         note.write_text("Keep this.", encoding="utf-8")
-        with self.assertRaises(installer.LearnError):
+        with self.assertRaises(installer.StudyError):
             installer.copy_package(ROOT, target, self.home)
         self.assertEqual(note.read_text(encoding="utf-8"), "Keep this.")
 

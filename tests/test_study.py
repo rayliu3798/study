@@ -8,10 +8,10 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("learn", ROOT / "scripts/learn.py")
-learn = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(learn)
-sys.modules["learn"] = learn
+spec = importlib.util.spec_from_file_location("study", ROOT / "scripts/study.py")
+study = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(study)
+sys.modules["study"] = study
 
 
 class LearningTests(unittest.TestCase):
@@ -28,7 +28,7 @@ class LearningTests(unittest.TestCase):
         if event == "UserPromptSubmit" and "turn_id" not in payload:
             self.turn += 1
             payload["turn_id"] = str(self.turn)
-        return learn.hook({"hook_event_name": event, "session_id": session,
+        return study.hook({"hook_event_name": event, "session_id": session,
                            "cwd": str(self.project), **payload})
 
     def prompt(self, text, session="one", **payload):
@@ -42,7 +42,7 @@ class LearningTests(unittest.TestCase):
         for key, value in arguments.items():
             argv.extend(["--" + key, value])
         with contextlib.redirect_stdout(io.StringIO()) as output:
-            self.assertEqual(learn.main(argv), 0)
+            self.assertEqual(study.main(argv), 0)
         return json.loads(output.getvalue())
 
     def note(self, session="one"):
@@ -111,7 +111,7 @@ class LearningTests(unittest.TestCase):
         note = self.note()
         note.write_text("# GSFix3D\n\nParent passage.\n", encoding="utf-8")
         self.prompt("How does mask augmentation work?")
-        with learn.bindings(self.project) as records:
+        with study.bindings(self.project) as records:
             records["one"]["pending"].update(anchor="Parent passage.", title="Mask augmentation")
         instructions = [
             "<skill>Example: $study pause</skill>",
@@ -129,7 +129,7 @@ class LearningTests(unittest.TestCase):
 
     def test_activation_survives_injected_skill_and_additional_message(self):
         self.prompt("$study In 3.1.2, where are the masks obtained?")
-        self.prompt("<skill>Learn instructions</skill>")
+        self.prompt("<skill>Study instructions</skill>")
         self.prompt("If you are unsure, check their code.")
         self.stop("The masks come from PIPE_Masks.")
         text = self.note().read_text(encoding="utf-8")
@@ -145,7 +145,7 @@ class LearningTests(unittest.TestCase):
                 elif mode == "bare-pause":
                     self.prompt("$study pause", mode)
                     self.stop("Pause confirmation.", mode)
-                    self.prompt("<skill>Learn instructions</skill>", mode)
+                    self.prompt("<skill>Study instructions</skill>", mode)
                     self.prompt("Private question", mode)
                 else:
                     self.prompt("Private question", mode)
@@ -352,9 +352,9 @@ class LearningTests(unittest.TestCase):
         note.write_text("Repeated.\n\nRepeated.\n", encoding="utf-8")
         before = note.read_bytes()
         self.prompt("Which passage?")
-        with learn.bindings(self.project) as records:
-            with self.assertRaises(learn.LearnError):
-                learn.place(records, self.project, "one", "Repeated.")
+        with study.bindings(self.project) as records:
+            with self.assertRaises(study.StudyError):
+                study.place(records, self.project, "one", "Repeated.")
         self.assertEqual(note.read_bytes(), before)
 
     def test_management_and_condensation_confirmations_are_not_saved(self):
