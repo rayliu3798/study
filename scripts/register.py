@@ -14,20 +14,23 @@ def register(home, plugin):
     path = home / ".agents" / "plugins" / "marketplace.json"
     marketplace = json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else {
         "name": "personal", "interface": {"displayName": "Personal"}, "plugins": []}
-    entry = {"name": "codex-learn", "source": {"source": "local", "path": "./" + plugin.relative_to(home).as_posix()},
+    entry = {"name": "study", "source": {"source": "local", "path": "./" + plugin.relative_to(home).as_posix()},
              "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"}
     if not isinstance(marketplace.get("name"), str) or not isinstance(marketplace.get("plugins"), list):
         raise LearnError("Invalid personal marketplace: name and plugins are required.")
-    matches = [e for e in marketplace["plugins"] if e.get("name") == "codex-learn"]
+    matches = [e for e in marketplace["plugins"] if e.get("name") in ("study", "codex-learn")]
     if len(matches) > 1 or (matches and matches[0].get("source") != entry["source"]):
-        raise LearnError("A different codex-learn entry already exists; refusing to replace it.")
-    if not matches:
+        raise LearnError("A different study entry already exists; refusing to replace it.")
+    if not matches or matches[0]["name"] != "study":
         if path.exists():
             atomic(path.with_name("marketplace.backup-" + str(time.time_ns()) + ".json"), path.read_text(encoding="utf-8-sig"))
-        marketplace["plugins"].append(entry)
+        if matches:
+            matches[0]["name"] = "study"
+        else:
+            marketplace["plugins"].append(entry)
         atomic(path, dump(marketplace))
     return {"marketplace": str(path), "name": marketplace["name"], "plugin": str(plugin),
-            "next": f"Run codex plugin add codex-learn@{marketplace['name']}, then review its hooks."}
+            "next": f"Run codex plugin add study@{marketplace['name']}, then review its hooks."}
 
 
 if __name__ == "__main__":

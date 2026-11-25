@@ -17,7 +17,7 @@ Native hooks usually complete activation, continuation, off, status, and pause b
 - Status: `status --project <project> --session <session>`.
 - Skip the next question: `pause --project <project> --session <session>`.
 
-When manually activating or continuing with a learning question or source material, pass it as a separate quoted `--question` argument. This registers the current question for the Stop hook; `--topic` only names the note. Omit `--question` for a standalone management command so its confirmation is not saved. The native prompt hook also recognizes `@Codex-Learn`.
+When manually activating or continuing with a learning question or source material, pass it as a separate quoted `--question` argument. This registers the current question for the Stop hook; `--topic` only names the note. Omit `--question` for a standalone management command so its confirmation is not saved. The native prompt hook also recognizes `@study`.
 
 Continue uses the selected Markdown file alone. Read that note, then continue from the user's question without repeating its overview. It can also switch the current conversation to a different note. It stops other Learn bindings from saving to the selected note. No old transcript, archive, or saved question tree is needed.
 

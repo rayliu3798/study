@@ -1,9 +1,9 @@
 {
-  "name": "codex-learn",
+  "name": "study",
   "version": "0.1.0",
   "description": "Live learning notes with nested quote follow-ups and branch condensation.",
   "interface": {
-    "displayName": "Learn",
+    "displayName": "study",
     "shortDescription": "Save explanations beside the passages you question",
     "longDescription": "Enable learning notes for one conversation. Save completed answers in your project's learn folder, nest quoted follow-ups, and integrate explored questions with condense.",
     "category": "Productivity",

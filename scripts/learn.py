@@ -206,11 +206,11 @@ def hook(payload):
         if event == "UserPromptSubmit":
             prompt = payload.get("prompt", "")
             instruction = re.match(r"^\s*(?:# AGENTS\.md instructions|<skill>|<environment_context>)", prompt)
-            match = None if instruction else re.search(r"(?<!\S)(?:[/\$](?:codex-learn:)?|@codex-)(learn|condense)\b(?:\s+(off|status|pause|continue|cleanup)\b)?(.*)", prompt, re.I | re.S)
+            match = None if instruction else re.search(r"(?<!\S)(?:[/\$](?:study:)?(learn|condense)|@study)\b(?:\s+(off|status|pause|continue|cleanup)\b)?(.*)", prompt, re.I | re.S)
             if match:
                 kind, action, remainder = match.groups()
                 action, remainder = (action or "enable").lower(), remainder.strip()
-                command = action if kind.lower() == "learn" else "condense"
+                command = action if (kind or "learn").lower() == "learn" else "condense"
                 if command == "enable":
                     remainder = "\n".join(part for part in (prompt[:match.start()].strip(), remainder) if part)
             turn = payload.get("turn_id")
@@ -254,7 +254,7 @@ def hook(payload):
     context = {"session": session, "project": str(Path(project).resolve()),
                "script": str(Path(__file__).resolve()), **state,
                "command_completed": command if command in ("enable", "continue", "off", "status", "pause") else None}
-    guidance = "Codex Learn binding: " + json.dumps(context, ensure_ascii=False)
+    guidance = "study binding: " + json.dumps(context, ensure_ascii=False)
     if state["enabled"]:
         guidance += "\nFollow the Learn skill. Answer normally; the Stop hook saves the final answer. Read the note for earlier context. Exclude clearly unrelated questions before answering."
     return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": guidance}}

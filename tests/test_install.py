@@ -39,10 +39,10 @@ class InstallationTests(unittest.TestCase):
             result = installer.install(self.home, executable="codex", output=lambda message: None)
         entries = json.loads(catalog.read_text(encoding="utf-8"))["plugins"]
         self.assertEqual(entries[0], other)
-        self.assertEqual(entries[1]["name"], "codex-learn")
-        self.assertEqual(result["plugin"], "codex-learn@my-personal")
+        self.assertEqual(entries[1]["name"], "study")
+        self.assertEqual(result["plugin"], "study@my-personal")
         self.assertEqual(calls, [("plugin", "marketplace", "list", "--json"),
-                                 ("plugin", "add", "codex-learn@my-personal", "--json")])
+                                 ("plugin", "add", "study@my-personal", "--json")])
 
     def test_installation_copy_preserves_notes_and_omits_python_caches(self):
         target = self.home / "learn-plugin"

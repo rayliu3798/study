@@ -1,4 +1,4 @@
-"""Install Codex Learn with the native CLI; review hooks in Codex."""
+"""Install study with the native CLI; review hooks in Codex."""
 import argparse
 import json
 import os
@@ -43,8 +43,8 @@ def validate_package(package):
     if not manifest.is_file():
         raise LearnError("The package needs .codex-plugin/plugin.json.")
     metadata = json.loads(manifest.read_text(encoding="utf-8-sig"))
-    if metadata.get("name") != "codex-learn" or metadata.get("hooks") != "./hooks/hooks.json":
-        raise LearnError("This is not the supported Codex Learn package.")
+    if metadata.get("name") != "study" or metadata.get("hooks") != "./hooks/hooks.json":
+        raise LearnError("This is not the supported study package.")
     for relative in ("scripts/learn.py", "scripts/run.ps1", "hooks/hooks.json",
                      "skills/learn/SKILL.md", "skills/condense/SKILL.md", "install.py", "install.ps1", "README.md"):
         if not (package / relative).is_file():
@@ -59,18 +59,18 @@ def destination(home):
                 or not isinstance(data.get("plugins"), list)
                 or not all(isinstance(entry, dict) for entry in data["plugins"])):
             raise LearnError("The existing personal marketplace is invalid; leaving it unchanged.")
-        matches = [entry for entry in data.get("plugins", []) if entry.get("name") == "codex-learn"]
+        matches = [entry for entry in data.get("plugins", []) if entry.get("name") in ("study", "codex-learn")]
         if len(matches) > 1:
-            raise LearnError("The personal marketplace has duplicate codex-learn entries.")
+            raise LearnError("The personal marketplace has conflicting entries for study.")
         if matches:
             source = matches[0].get("source", {})
             if source.get("source") != "local" or not source.get("path", "").startswith("./"):
-                raise LearnError("An existing codex-learn entry uses another source; leaving it unchanged.")
+                raise LearnError("An existing study entry uses another source; leaving it unchanged.")
             target = (home / source["path"]).resolve()
             if not target.is_relative_to(home) or target == home:
                 raise LearnError("The existing plugin source must stay inside your home directory.")
             return target
-    return (home / ".codex/plugins/sources/codex-learn").resolve()
+    return (home / ".codex/plugins/sources/study").resolve()
 
 
 def copy_package(package, target, home):
@@ -79,7 +79,7 @@ def copy_package(package, target, home):
     if target.exists() and any(target.iterdir()):
         manifests = (target / ".codex-plugin/plugin.json", target / "plugin.json")
         existing = next((path for path in manifests if path.is_file()), None)
-        if not existing or json.loads(existing.read_text(encoding="utf-8-sig")).get("name") != "codex-learn":
+        if not existing or json.loads(existing.read_text(encoding="utf-8-sig")).get("name") not in ("study", "codex-learn"):
             raise LearnError("The installation target contains another project; leaving it unchanged.")
     files = [package / name for name in ("install.py", "install.ps1", "README.md")]
     for name in (".codex-plugin", "hooks", "scripts", "skills"):
@@ -122,12 +122,12 @@ def install(home, package=PACKAGE, executable=None, output=print):
         raise LearnError(f"A different marketplace already uses the name {name}; it was not replaced.")
     if not matching:
         cli(executable, "plugin", "marketplace", "add", str(home), "--json", as_json=True)
-    plugin_id = f"codex-learn@{name}"
+    plugin_id = f"study@{name}"
     result = cli(executable, "plugin", "add", plugin_id, "--json", as_json=True)
     installed = Path(result["installedPath"]).resolve()
     output(f"Installed {plugin_id}\nSource: {target}\nInstalled copy: {installed}")
     return {"plugin": plugin_id, "source": str(target), "installed": str(installed),
-            "next": "Review Learn hooks in Codex's native hooks UI, then restart or resume Codex."}
+            "next": "Review study hooks in Codex's native hooks UI, then restart or resume Codex."}
 
 
 def main():
