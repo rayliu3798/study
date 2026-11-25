@@ -49,7 +49,7 @@ class LearningTests(unittest.TestCase):
         return Path(self.command("status", session)["note"])
 
     def test_saves_only_completed_final_answer_once(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         self.stop("Activation explanation.")
         self.prompt("How does reflection work?")
         self.stop("The final explanation.")
@@ -98,9 +98,9 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(text.count("Please explain further."), 2)
 
     def test_activation_and_additional_learning_messages_are_combined(self):
-        self.prompt("$study:learn Explain mask augmentation.", turn_id="first")
-        self.prompt("$study:learn Include the mesh input.", turn_id="second")
-        self.prompt("$study:learn Include the mesh input.", turn_id="second")
+        self.prompt("$study Explain mask augmentation.", turn_id="first")
+        self.prompt("$study Include the mesh input.", turn_id="second")
+        self.prompt("$study Include the mesh input.", turn_id="second")
         self.stop("The explanation.")
         text = self.note().read_text(encoding="utf-8")
         self.assertIn("Explain mask augmentation.\n\nInclude the mesh input.\n\nThe explanation.", text)
@@ -114,7 +114,7 @@ class LearningTests(unittest.TestCase):
         with learn.bindings(self.project) as records:
             records["one"]["pending"].update(anchor="Parent passage.", title="Mask augmentation")
         instructions = [
-            "<skill>Example: $study:learn pause</skill>",
+            "<skill>Example: $study pause</skill>",
             "# AGENTS.md instructions\nUse English.",
             "<environment_context>Current directory</environment_context>",
         ]
@@ -128,7 +128,7 @@ class LearningTests(unittest.TestCase):
             self.assertNotIn(instruction, text)
 
     def test_activation_survives_injected_skill_and_additional_message(self):
-        self.prompt("$study:learn In 3.1.2, where are the masks obtained?")
+        self.prompt("$study In 3.1.2, where are the masks obtained?")
         self.prompt("<skill>Learn instructions</skill>")
         self.prompt("If you are unsure, check their code.")
         self.stop("The masks come from PIPE_Masks.")
@@ -141,9 +141,9 @@ class LearningTests(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.command("enable", mode, topic="GSFix3D")
                 if mode == "inline-pause":
-                    self.prompt("$study:learn pause Private question", mode)
+                    self.prompt("$study pause Private question", mode)
                 elif mode == "bare-pause":
-                    self.prompt("$study:learn pause", mode)
+                    self.prompt("$study pause", mode)
                     self.stop("Pause confirmation.", mode)
                     self.prompt("<skill>Learn instructions</skill>", mode)
                     self.prompt("Private question", mode)
@@ -162,8 +162,8 @@ class LearningTests(unittest.TestCase):
     def test_activation_after_source_saves_first_question(self):
         source = r"CV\3dgs\GSFix3D.pdf"
         question = "In section 2.1, how does 3DGS help SLAM?"
-        prompts = (f"{source} $study:learn {question}",
-                   f"{source}\n{question}\n$study:learn")
+        prompts = (f"{source} $study {question}",
+                   f"{source}\n{question}\n$study")
         for index, prompt in enumerate(prompts):
             with self.subTest(prompt=prompt):
                 session = f"inline-{index}"
@@ -186,7 +186,7 @@ class LearningTests(unittest.TestCase):
         note.parent.mkdir()
         note.write_text("# Earlier section\n", encoding="utf-8")
         for session, quote in (("one", '"'), ("two", "'")):
-            self.prompt(f"$study:learn {quote}{source}{quote} Explain section 3.1.", session)
+            self.prompt(f"$study {quote}{source}{quote} Explain section 3.1.", session)
             self.assertEqual(self.note(session), note)
             self.stop(f"Angle explanation {session}.", session)
         self.assertEqual(list(note.parent.glob("*.md")), [note])
@@ -251,7 +251,7 @@ class LearningTests(unittest.TestCase):
         old = root / ".sessions/old"
         old.mkdir(parents=True)
         (old / "state.json").write_text("unusable old archive", encoding="utf-8")
-        self.prompt('$study:learn continue @"learn/Poppy.md"')
+        self.prompt('$study continue @"learn/Poppy.md"')
         self.stop("Continued.")
         self.assertEqual(note.read_text(encoding="utf-8"), original)
         note.write_text(original.replace("existing", "edited"), encoding="utf-8")
@@ -262,7 +262,7 @@ class LearningTests(unittest.TestCase):
         self.assertIn("Next explanation", text)
 
     def test_can_switch_notes_and_stops_previous_binding(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         first = self.note()
         second = first.with_name("Other.md")
         second.write_text("# Other\n", encoding="utf-8")
@@ -273,10 +273,10 @@ class LearningTests(unittest.TestCase):
         self.assertTrue(self.command("status", "two")["enabled"])
 
     def test_off_disables_only_this_conversation_and_does_not_save_confirmation(self):
-        self.prompt("$study:learn optics")
-        self.prompt("$study:learn chemistry", "two")
+        self.prompt("$study optics")
+        self.prompt("$study chemistry", "two")
         note = self.note()
-        self.prompt("$study:learn off")
+        self.prompt("$study off")
         self.stop("Learning notes are off.")
         self.prompt("Unlogged question")
         self.stop("Unlogged answer")
@@ -285,15 +285,15 @@ class LearningTests(unittest.TestCase):
         self.assertTrue(self.command("status", "two")["enabled"])
 
     def test_bare_and_inline_pause_skip_only_one_question(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         self.stop("Overview")
-        self.prompt("$study:learn pause")
+        self.prompt("$study pause")
         self.stop("Pause confirmation")
         self.prompt("Private question")
         self.stop("Private answer")
         self.prompt("Included question")
         self.stop("Included answer")
-        self.prompt("$study:learn pause Another private question")
+        self.prompt("$study pause Another private question")
         self.stop("Another private answer")
         self.prompt("Next included question")
         self.stop("Next included answer")
@@ -305,7 +305,7 @@ class LearningTests(unittest.TestCase):
         self.assertIn("Next included answer", text)
 
     def test_exclusion_survives_duplicate_prompt_and_next_question_saves(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         self.prompt("Unrelated question", turn_id="unrelated")
         self.command("exclude")
         self.prompt("Unrelated question", turn_id="unrelated")
@@ -317,7 +317,7 @@ class LearningTests(unittest.TestCase):
         self.assertIn("Relevant answer", text)
 
     def test_exact_passage_placement_nests_followups(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         note = self.note()
         note.write_text("# Optics\n\nParent passage.\n\nLater paragraph.\n", encoding="utf-8")
         self.prompt("Explain the parent passage")
@@ -335,7 +335,7 @@ class LearningTests(unittest.TestCase):
         for block, anchor, closing in (("```python\nx = 1\n\nx = 2\n```", "x = 1", "x = 2\n```"),
                                        ("$$\na = b\n\nc = d\n$$", "a = b", "c = d\n$$")):
             with self.subTest(anchor=anchor):
-                self.prompt("$study:learn blocks")
+                self.prompt("$study blocks")
                 note = self.note()
                 note.write_text("# Blocks\n\n" + block + "\n\nTail.\n", encoding="utf-8")
                 self.prompt("Explain this block")
@@ -347,7 +347,7 @@ class LearningTests(unittest.TestCase):
                 self.assertLess(text.index("**Follow-up**"), text.index("Tail."))
 
     def test_ambiguous_placement_is_rejected_without_editing_note(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         note = self.note()
         note.write_text("Repeated.\n\nRepeated.\n", encoding="utf-8")
         before = note.read_bytes()
@@ -358,19 +358,19 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(note.read_bytes(), before)
 
     def test_management_and_condensation_confirmations_are_not_saved(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         self.stop("Overview")
         for command in ("status", "cleanup"):
-            self.prompt("$study:learn " + command)
+            self.prompt("$study " + command)
             self.stop("Management confirmation")
-        self.prompt("$study:condense")
+        self.prompt("$condense")
         self.stop("Condensation confirmation")
         text = self.note().read_text(encoding="utf-8")
         self.assertNotIn("confirmation", text)
         self.assertIn("Overview", text)
 
     def test_ordinary_use_creates_only_note_and_small_active_binding(self):
-        self.prompt("$study:learn optics")
+        self.prompt("$study optics")
         self.stop("Overview")
         self.prompt("Next question")
         self.stop("Next answer")

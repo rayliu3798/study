@@ -46,7 +46,7 @@ def validate_package(package):
     if metadata.get("name") != "study" or metadata.get("hooks") != "./hooks/hooks.json":
         raise LearnError("This is not the supported study package.")
     for relative in ("scripts/learn.py", "scripts/run.ps1", "hooks/hooks.json",
-                     "skills/learn/SKILL.md", "skills/condense/SKILL.md", "install.py", "install.ps1", "README.md"):
+                     "skills/study/SKILL.md", "skills/condense/SKILL.md", "install.py", "install.ps1", "README.md"):
         if not (package / relative).is_file():
             raise LearnError(f"Incomplete plugin package: missing {relative}.")
 

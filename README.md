@@ -10,14 +10,14 @@ There is no conversation archive, question database, answer-version history, bac
 
 ## Use
 
-- `$study:learn <topic or material>` enables notes for this conversation.
-- `$study:learn continue @"learn/Poppy.md"` selects an existing note. The file alone is sufficient.
-- `$study:learn off` stops saving.
-- `$study:learn status` reports the active note.
-- `$study:learn pause` excludes the next question and answer.
-- `$study:learn pause <question>` excludes that question only.
-- `$study:learn cleanup` removes clearly unrelated sections from the active note.
-- `$study:condense` integrates the selected topic and its follow-ups without shortening the teaching.
+- `$study <topic or material>` enables notes for this conversation.
+- `$study continue @"learn/Poppy.md"` selects an existing note. The file alone is sufficient.
+- `$study off` stops saving.
+- `$study status` reports the active note.
+- `$study pause` excludes the next question and answer.
+- `$study pause <question>` excludes that question only.
+- `$study cleanup` removes clearly unrelated sections from the active note.
+- `$condense` integrates the selected topic and its follow-ups without shortening the teaching.
 
 The plugin mention `@study <topic or material>` also enables notes. For manual activation during a turn, pass the current question or material with `enable --question <question or material>` so the first answer is saved. Manual `continue` accepts the same argument when a question accompanies the selected note.
 

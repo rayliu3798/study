@@ -1,6 +1,6 @@
 {
   "name": "study",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Live learning notes with nested quote follow-ups and branch condensation.",
   "interface": {
     "displayName": "study",
